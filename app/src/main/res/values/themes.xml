@@ -1,0 +1,13 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.DPPaint" parent="Theme.Material3.DayNight">
+        <!-- Customize your light theme here. -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primaryDark</item>
+        <item name="actionBarTheme">@style/ThemeOverlay.MaterialComponents.ActionBar</item>
+        <item name="actionBarPopupTheme">@style/ThemeOverlay.MaterialComponents.Light</item>
+        <item name="actionBarStyle">@style/Widget.MaterialComponents.Light.ActionBar.Solid</item>
+    </style>
+
+    <style name="Theme.DPPaint" parent="Base.Theme.DPPaint" />
+</resources>

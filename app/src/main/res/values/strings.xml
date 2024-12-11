@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">DPPaint</string>
+    <string name="changeSize">Изменить размер</string>
+    <string name="changeColor">Изменить цвет</string>
+    <string name="fileCategory">Файл</string>
+    <string name="clear">Очистить</string>
+    <string name="save">Сохранить</string>
+    <string name="undo">Отменить</string>
+</resources>

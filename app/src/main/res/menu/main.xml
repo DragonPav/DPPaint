@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/undo"
+        android:icon="@drawable/ic_undo"
+        android:title="@string/undo"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/save"
+        android:icon="@drawable/ic_save"
+        android:title="@string/save"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/clear"
+        android:icon="@drawable/ic_clear"
+        android:title="@string/clear"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/changeSize"
+        android:title="@string/changeSize" />
+    <item
+        android:id="@+id/changeColor"
+        android:icon="@drawable/ic_palette"
+        android:title="@string/changeColor"
+        app:showAsAction="ifRoom" />
+</menu>
