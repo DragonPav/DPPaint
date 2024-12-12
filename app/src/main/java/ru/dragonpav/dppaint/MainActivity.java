@@ -269,6 +269,7 @@ public class MainActivity extends AppCompatActivity {
                     String imagePath = cursor.getString(index);
                     Bitmap origin = BitmapFactory.decodeFile(imagePath);
                     image = Bitmap.createScaledBitmap(origin, sh.getSurfaceFrame().width(), sh.getSurfaceFrame().height(), true);
+                    draw();
                 }
             }
         }
