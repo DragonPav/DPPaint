@@ -14,9 +14,7 @@
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/clear"
-        android:icon="@drawable/ic_clear"
-        android:title="@string/clear"
-        app:showAsAction="ifRoom" />
+        android:title="@string/clear" />
     <item
         android:id="@+id/changeSize"
         android:title="@string/changeSize" />
@@ -25,4 +23,7 @@
         android:icon="@drawable/ic_palette"
         android:title="@string/changeColor"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/loadImage"
+        android:title="@string/load_image" />
 </menu>

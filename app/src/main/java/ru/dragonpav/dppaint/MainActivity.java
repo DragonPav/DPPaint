@@ -1,17 +1,22 @@
 package ru.dragonpav.dppaint;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.icu.text.DateFormat;
+import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.PersistableBundle;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -26,6 +31,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -34,6 +40,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     private SurfaceView sv;
@@ -45,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private Handler pc;
     private HandlerThread thread;
     private int redC, greenC, blueC;
+    private Bitmap image;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -206,6 +214,11 @@ public class MainActivity extends AppCompatActivity {
                 brushColor = Color.rgb(redC, greenC, blueC);
             });
             builder.create().show();
+        } else if (id == R.id.loadImage) {
+            Intent pickImage = new Intent(Intent.ACTION_GET_CONTENT);
+            pickImage.setType("image/*");
+            Intent chooser = Intent.createChooser(pickImage, "Загрузите картинку");
+            startActivityForResult(chooser, 1);
         }
         return false;
     }
@@ -216,7 +229,8 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == 0) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-                File out = new File(dir, "picture.png");
+                DateFormat format = new SimpleDateFormat("ddMMyyyy_hhmmss", Locale.ROOT);
+                File out = new File(dir, "drawing" + format + ".png");
                 try {
                     final FileOutputStream fw = new FileOutputStream(out);
                     final Bitmap bmp = Bitmap.createBitmap(sh.getSurfaceFrame().width(), sh.getSurfaceFrame().height(), Bitmap.Config.RGB_565);
@@ -242,9 +256,31 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+            if (resultCode == RESULT_OK) {
+                final String[] path = {MediaStore.Images.Media.DATA};
+                Cursor cursor = getContentResolver().query(data.getData(), path, null, null);
+                cursor.moveToFirst();
+                int index = cursor.getColumnIndex(path[0]);
+                if (index != -1) {
+                    String imagePath = cursor.getString(index);
+                    Bitmap origin = BitmapFactory.decodeFile(imagePath);
+                    image = Bitmap.createScaledBitmap(origin, sh.getSurfaceFrame().width(), sh.getSurfaceFrame().height(), true);
+                }
+            }
+        }
+    }
+
     private void draw() {
         Canvas canvas = sh.lockCanvas(null);
-        canvas.drawColor(Color.WHITE);
+        if (image != null) {
+            canvas.drawBitmap(image, 0, 0, null);
+        } else {
+            canvas.drawColor(Color.WHITE);
+        }
         Paint mp = new Paint();
         mp.setStrokeJoin(Paint.Join.ROUND);
         mp.setStrokeCap(Paint.Cap.ROUND);
