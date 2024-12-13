@@ -1,6 +1,7 @@
 package ru.dragonpav.dppaint;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -30,8 +31,10 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -40,6 +43,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
@@ -47,12 +51,13 @@ public class MainActivity extends AppCompatActivity {
     private SurfaceHolder sh;
     private Path preview;
     private int brushSize = 16;
+    private int backgroundColor = Color.WHITE;
     private int brushColor = Color.RED;
     private ArrayList<Drawing> drawings = new ArrayList<>();
     private Handler pc;
     private HandlerThread thread;
-    private int redC, greenC, blueC;
     private Bitmap image;
+    private ActivityResultLauncher<Intent> resultLauncher;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,6 +102,21 @@ public class MainActivity extends AppCompatActivity {
                         return false;
                 }
         });
+        resultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), (o) -> {
+            if (o.getResultCode() == Activity.RESULT_OK) {
+                final String[] path = {MediaStore.Images.Media.DATA};
+                Intent data = o.getData();
+                Cursor cursor = getContentResolver().query(data.getData(), path, null, null);
+                cursor.moveToFirst();
+                int index = cursor.getColumnIndex(path[0]);
+                if (index != -1) {
+                    String imagePath = cursor.getString(index);
+                    Bitmap origin = BitmapFactory.decodeFile(imagePath);
+                    image = Bitmap.createScaledBitmap(origin, sh.getSurfaceFrame().width(), sh.getSurfaceFrame().height(), true);
+                    draw();
+                }
+            }
+        });
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -109,8 +129,21 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.clear) {
-            drawings.clear();
-            draw();
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+            builder.setTitle("Внимание!");
+            builder.setIcon(R.drawable.ic_clear_dialog);
+            builder.setMessage("Все будет очищено, в том числе и фон.\nЭто действие невозможно отменить. Вы уверены?");
+            builder.setCancelable(false);
+            builder.setNegativeButton("Нет", ((dialog, which) -> {
+                dialog.dismiss();
+            }));
+            builder.setPositiveButton("Да", ((dialog, which) -> {
+                dialog.dismiss();
+                drawings.clear();
+                image = null;
+                draw();
+            }));
+            builder.create().show();
         } else if (id == R.id.undo) {
             if (!drawings.isEmpty()) {
                 drawings.remove(drawings.size() - 1);
@@ -145,80 +178,19 @@ public class MainActivity extends AppCompatActivity {
             });
             builder.create().show();
         } else if (id == R.id.changeColor) {
-            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-            builder.setTitle("Выберите цвет");
-            LayoutInflater inflater = getLayoutInflater();
-            View v = inflater.inflate(R.layout.color_picker_dialog, null);
-            SeekBar red = v.findViewById(R.id.redSeekBar);
-            SeekBar green = v.findViewById(R.id.greenSeekBar);
-            SeekBar blue = v.findViewById(R.id.blueSeekBar);
-            final TextView redD = v.findViewById(R.id.redDisplay);
-            final TextView greenD = v.findViewById(R.id.greenDisplay);
-            final TextView blueD = v.findViewById(R.id.blueDisplay);
-            final View preview = v.findViewById(R.id.colorPreview);
-            red.setProgress(redC);
-            green.setProgress(greenC);
-            blue.setProgress(blueC);
-            preview.setBackgroundColor(Color.rgb(redC, greenC, blueC));
-            redD.setText(String.valueOf(redC));
-            greenD.setText(String.valueOf(greenC));
-            blueD.setText(String.valueOf(blueC));
-            red.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (fromUser) {
-                        redD.setText(String.valueOf(progress));
-                        redC = progress;
-                        preview.setBackgroundColor(Color.rgb(redC, greenC, blueC));
-                    }
-                }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {}
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {}
-            });
-            green.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (fromUser) {
-                        greenD.setText(String.valueOf(progress));
-                        greenC = progress;
-                        preview.setBackgroundColor(Color.rgb(redC, greenC, blueC));
-                    }
-                }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {}
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {}
-            });
-            blue.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    blueD.setText(String.valueOf(progress));
-                    blueC = progress;
-                    preview.setBackgroundColor(Color.rgb(redC, greenC, blueC));
-                }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {}
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {}
-            });
-            builder.setView(v);
-            builder.setPositiveButton("Ок", (dialogInterface, which) -> {
-                brushColor = Color.rgb(redC, greenC, blueC);
-            });
-            builder.create().show();
+            ColorPickerDialog dialog = new ColorPickerDialog(this, "Выберите цвет кисти", brushColor);
+            dialog.createAndShow((resultColor) -> brushColor = resultColor);
         } else if (id == R.id.loadImage) {
             Intent pickImage = new Intent(Intent.ACTION_GET_CONTENT);
             pickImage.setType("image/*");
             Intent chooser = Intent.createChooser(pickImage, "Загрузите картинку");
-            startActivityForResult(chooser, 1);
+            resultLauncher.launch(chooser);
+        } else if (id == R.id.setBackgroundColor) {
+            ColorPickerDialog dialog = new ColorPickerDialog(this, "Выберите цвет фона", backgroundColor);
+            dialog.createAndShow((resultColor) -> {
+                backgroundColor = resultColor;
+                draw();
+            });
         }
         return false;
     }
@@ -229,8 +201,14 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == 0) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-                DateFormat format = new SimpleDateFormat("ddMMyyyy_hhmmss", Locale.ROOT);
-                File out = new File(dir, "drawing" + format + ".png");
+                DateFormat format = new SimpleDateFormat("ddMMyyyy_hhmmss", Locale.getDefault());
+                File out = new File(dir, "drawing" + format.format(new Date()) + ".png");
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+                builder.setTitle("Ждите...");
+                builder.setMessage("Сохранение файла...");
+                builder.setCancelable(false);
+                final AlertDialog dialog = builder.create();
+                dialog.show();
                 try {
                     final FileOutputStream fw = new FileOutputStream(out);
                     final Bitmap bmp = Bitmap.createBitmap(sh.getSurfaceFrame().width(), sh.getSurfaceFrame().height(), Bitmap.Config.RGB_565);
@@ -244,6 +222,7 @@ public class MainActivity extends AppCompatActivity {
                                 e.fillInStackTrace();
                             }
                             Toast.makeText(this, "Файл сохранен", Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
                         }
                     }, pc);
                 } catch (IOException e) {
@@ -255,32 +234,12 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1) {
-            if (resultCode == RESULT_OK) {
-                final String[] path = {MediaStore.Images.Media.DATA};
-                Cursor cursor = getContentResolver().query(data.getData(), path, null, null);
-                cursor.moveToFirst();
-                int index = cursor.getColumnIndex(path[0]);
-                if (index != -1) {
-                    String imagePath = cursor.getString(index);
-                    Bitmap origin = BitmapFactory.decodeFile(imagePath);
-                    image = Bitmap.createScaledBitmap(origin, sh.getSurfaceFrame().width(), sh.getSurfaceFrame().height(), true);
-                    draw();
-                }
-            }
-        }
-    }
-
     private void draw() {
         Canvas canvas = sh.lockCanvas(null);
         if (image != null) {
             canvas.drawBitmap(image, 0, 0, null);
         } else {
-            canvas.drawColor(Color.WHITE);
+            canvas.drawColor(backgroundColor);
         }
         Paint mp = new Paint();
         mp.setStrokeJoin(Paint.Join.ROUND);

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
-
     <item
         android:id="@+id/undo"
         android:icon="@drawable/ic_undo"
@@ -13,17 +12,20 @@
         android:title="@string/save"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/changeColor"
+        android:icon="@drawable/ic_palette"
+        android:title="@string/changeColor"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/clear"
         android:title="@string/clear" />
     <item
         android:id="@+id/changeSize"
         android:title="@string/changeSize" />
     <item
-        android:id="@+id/changeColor"
-        android:icon="@drawable/ic_palette"
-        android:title="@string/changeColor"
-        app:showAsAction="ifRoom" />
-    <item
         android:id="@+id/loadImage"
         android:title="@string/load_image" />
+    <item
+        android:id="@+id/setBackgroundColor"
+        android:title="@string/set_background_color" />
 </menu>

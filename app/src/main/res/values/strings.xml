@@ -1,10 +1,11 @@
 <resources>
     <string name="app_name">DPPaint</string>
-    <string name="changeSize">Изменить размер</string>
+    <string name="changeSize">Изменить размер кисти</string>
     <string name="changeColor">Изменить цвет</string>
     <string name="fileCategory">Файл</string>
     <string name="clear">Очистить</string>
     <string name="save">Сохранить</string>
     <string name="undo">Отменить</string>
     <string name="load_image">Загрузить картинку</string>
+    <string name="set_background_color">Изменить цвет фона</string>
 </resources>
